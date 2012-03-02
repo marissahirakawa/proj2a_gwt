@@ -13,8 +13,9 @@
 
   <!-- Other module inherits                                      -->
 
-  <!-- Specify the app entry point class.                         -->
-  <entry-point class='proj2a.client.Proj2a'/>
+  <!--<inherits name='com.google.gwt.http.HTTP'/>-->
+  <collapse-all-properties/>
+  <entry-point class='proj2a.client.Proj2a'></entry-point>
 
   <!-- Specify the paths for translatable code                    -->
   <source path='client'/>

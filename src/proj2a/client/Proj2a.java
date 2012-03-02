@@ -1,152 +1,227 @@
 package proj2a.client;
 
-import proj2a.shared.FieldVerifier;
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.DialogBox;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.Response;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.core.client.JsonUtils;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.gwt.view.client.SingleSelectionModel;
+import com.google.gwt.http.client.URL;
+import java.util.ArrayList;
 
-/**
- * Entry point classes define <code>onModuleLoad()</code>.
- */
-public class Proj2a implements EntryPoint {
-	/**
-	 * The message displayed to the user when the server cannot be reached or
-	 * returns an error.
-	 */
-	private static final String SERVER_ERROR = "An error occurred while "
-			+ "attempting to contact the server. Please check your network "
-			+ "connection and try again.";
-
-	/**
-	 * Create a remote service proxy to talk to the server-side Greeting service.
-	 */
-	private final GreetingServiceAsync greetingService = GWT
-			.create(GreetingService.class);
-
-	/**
-	 * This is the entry point method.
-	 */
-	public void onModuleLoad() {
-		final Button sendButton = new Button("Send");
-		final TextBox nameField = new TextBox();
-		nameField.setText("GWT User");
-		final Label errorLabel = new Label();
-
-		// We can add style names to widgets
-		sendButton.addStyleName("sendButton");
-
-		// Add the nameField and sendButton to the RootPanel
-		// Use RootPanel.get() to get the entire body element
-		RootPanel.get("nameFieldContainer").add(nameField);
-		RootPanel.get("sendButtonContainer").add(sendButton);
-		RootPanel.get("errorLabelContainer").add(errorLabel);
-
-		// Focus the cursor on the name field when the app loads
-		nameField.setFocus(true);
-		nameField.selectAll();
-
-		// Create the popup dialog box
-		final DialogBox dialogBox = new DialogBox();
-		dialogBox.setText("Remote Procedure Call");
-		dialogBox.setAnimationEnabled(true);
-		final Button closeButton = new Button("Close");
-		// We can set the id of a widget by accessing its Element
-		closeButton.getElement().setId("closeButton");
-		final Label textToServerLabel = new Label();
-		final HTML serverResponseLabel = new HTML();
-		VerticalPanel dialogVPanel = new VerticalPanel();
-		dialogVPanel.addStyleName("dialogVPanel");
-		dialogVPanel.add(new HTML("<b>Sending name to the server:</b>"));
-		dialogVPanel.add(textToServerLabel);
-		dialogVPanel.add(new HTML("<br><b>Server replies:</b>"));
-		dialogVPanel.add(serverResponseLabel);
-		dialogVPanel.setHorizontalAlignment(VerticalPanel.ALIGN_RIGHT);
-		dialogVPanel.add(closeButton);
-		dialogBox.setWidget(dialogVPanel);
-
-		// Add a handler to close the DialogBox
-		closeButton.addClickHandler(new ClickHandler() {
-			public void onClick(ClickEvent event) {
-				dialogBox.hide();
-				sendButton.setEnabled(true);
-				sendButton.setFocus(true);
-			}
-		});
-
-		// Create a handler for the sendButton and nameField
-		class MyHandler implements ClickHandler, KeyUpHandler {
-			/**
-			 * Fired when the user clicks on the sendButton.
-			 */
-			public void onClick(ClickEvent event) {
-				sendNameToServer();
-			}
-
-			/**
-			 * Fired when the user types in the nameField.
-			 */
-			public void onKeyUp(KeyUpEvent event) {
-				if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-					sendNameToServer();
-				}
-			}
-
-			/**
-			 * Send the name from the nameField to the server and wait for a response.
-			 */
-			private void sendNameToServer() {
-				// First, we validate the input.
-				errorLabel.setText("");
-				String textToServer = nameField.getText();
-				if (!FieldVerifier.isValidName(textToServer)) {
-					errorLabel.setText("Please enter at least four characters");
-					return;
-				}
-
-				// Then, we send the input to the server.
-				sendButton.setEnabled(false);
-				textToServerLabel.setText(textToServer);
-				serverResponseLabel.setText("");
-				greetingService.greetServer(textToServer,
-						new AsyncCallback<String>() {
-							public void onFailure(Throwable caught) {
-								// Show the RPC error message to the user
-								dialogBox
-										.setText("Remote Procedure Call - Failure");
-								serverResponseLabel
-										.addStyleName("serverResponseLabelError");
-								serverResponseLabel.setHTML(SERVER_ERROR);
-								dialogBox.center();
-								closeButton.setFocus(true);
-							}
-
-							public void onSuccess(String result) {
-								dialogBox.setText("Remote Procedure Call");
-								serverResponseLabel
-										.removeStyleName("serverResponseLabelError");
-								serverResponseLabel.setHTML(result);
-								dialogBox.center();
-								closeButton.setFocus(true);
-							}
-						});
-			}
-		}
-
-		// Add a handler to send the name to the server
-		MyHandler handler = new MyHandler();
-		sendButton.addClickHandler(handler);
-		nameField.addKeyUpHandler(handler);
-	}
+public class Proj2a implements EntryPoint, ClickHandler
+{
+   VerticalPanel mainPanel = new VerticalPanel();
+   String baseURL = "http://localhost:3000";
+   ArrayList<MyStudent> students = new ArrayList<MyStudent>();
+   JsArray<Student> jsonData;
+   Button addButton = new Button("Add");
+   Button deleteButton = new Button("Delete");
+   MyStudent selectedStudent = null;
+   Button addStudentButton = new Button("Add Student");
+   TextBox fnBox = new TextBox();
+   TextBox lnBox = new TextBox();
+   TextBox majBox = new TextBox();
+   
+   private static class MyStudent
+   {
+      private int id;
+      private String first_name;
+      private String last_name;
+      private String major;
+      
+      public MyStudent(int id, String fn, String ln, String maj)
+      {
+         this.id = id;
+         this.first_name = fn;
+         this.last_name = ln;
+         this.major = maj;
+      }
+   }
+   public void onModuleLoad()
+   {
+	 String url = baseURL + "/students/index.json";
+	 getRequest(url,"getStudents");
+	 addButton.addClickHandler(this);
+	 deleteButton.addClickHandler(this);
+	 addStudentButton.addClickHandler(this);
+	 RootPanel.get().add(mainPanel);
+	 //setupAddStudent();
+   }
+   public void onClick(ClickEvent e)
+   {
+	 Object source = e.getSource();
+	 if (source == addStudentButton) {
+		 String url = baseURL + "/students/createStudent";
+		 String postData = URL.encode("first_name") + "=" +
+		     URL.encode(fnBox.getText().trim()) + "&" +
+		     URL.encode("last_name") + "=" +
+		     URL.encode(lnBox.getText().trim()) + "&" +
+		     URL.encode("major") + "=" +
+		     URL.encode(majBox.getText().trim());
+		 	  fnBox.setText("");
+		 	  lnBox.setText("");
+		 	  majBox.setText("");
+		 postRequest(url,postData,"postStudent");
+	 }
+	 else if (source == addButton) {
+		 setupAddStudent();
+		 }
+	 else if (source == deleteButton) {
+		 String url = baseURL + "/students/deleteStudent";
+		 String postData = URL.encode("student_id") + "=" + 
+				 URL.encode("" + selectedStudent.id);
+		 postRequest(url,postData,"deleteStudent");
+	 }
+   }
+   public void getRequest(String url, final String getType) {
+      final RequestBuilder rb = new
+         RequestBuilder(RequestBuilder.GET,url);
+      try {
+         rb.sendRequest(null, new RequestCallback()
+         {
+            public void onError(final Request request,
+               final Throwable exception)
+            {
+               Window.alert(exception.getMessage());
+            }
+            public void onResponseReceived(final Request request,
+               final Response response)
+            {
+               if (getType.equals("getStudents")) {
+                  showStudents(response.getText());
+               }
+            }
+         });
+      }
+      // comment
+      catch (final Exception e) {
+         Window.alert(e.getMessage());
+      }
+   } // end getRequest()
+   public void postRequest(String url, String data,
+		   final String postType)
+   {
+		   final RequestBuilder rb = new
+				   RequestBuilder(RequestBuilder.POST,url);
+		   rb.setHeader("Content-type",
+				   "application/x-www-form-urlencoded");
+		   try {
+			   rb.sendRequest(data, new RequestCallback()
+		   {
+				   public void onError(final Request request,
+						   final Throwable exception)
+				   {
+					   Window.alert(exception.getMessage());
+				   }
+				   public void onResponseReceived(final Request request,
+						   final Response response)
+				   {
+					   if (postType.equals("postStudent") || postType.equals("deleteStudent")) {
+					   	mainPanel.clear();
+						   String url = baseURL + "/students/index.json";
+						   getRequest(url,"getStudents");
+					   }
+				   }
+		   	});
+		   }
+	   catch (Exception e) {
+		   Window.alert(e.getMessage());
+	   }
+   } // end postRequest()
+   private void showStudents(String responseText)
+   {
+   	//mainPanel.clear();
+      jsonData = getData(responseText);
+      students = new ArrayList<MyStudent>();
+      Student student = null;
+      for (int i = 0; i < jsonData.length(); i++) {
+         student = jsonData.get(i);
+         students.add(new MyStudent(student.getID(),
+            student.getFirstName(), student.getLastName(),
+            student.getMajor()));
+      }
+      CellTable<MyStudent> table = new CellTable<MyStudent>();
+      TextColumn<MyStudent> fnameCol = 
+         new TextColumn<MyStudent>()
+         {
+            @Override
+            public String getValue(MyStudent student)
+            {
+               return student.first_name;
+            }
+         };
+      TextColumn<MyStudent> lnameCol = 
+         new TextColumn<MyStudent>()
+         {
+            @Override
+            public String getValue(MyStudent student)
+            {
+               return student.last_name;
+            }
+         };
+         final SingleSelectionModel<MyStudent> selectionModel = new SingleSelectionModel<MyStudent>();
+         table.setSelectionModel(selectionModel);
+         selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
+         	{
+         		public void onSelectionChange(SelectionChangeEvent e)
+         		{
+         			MyStudent selected = selectionModel.getSelectedObject();
+         			if (selected != null) {
+         				selectedStudent = selected;
+         			}
+         		}
+         	});
+      
+      table.addColumn(fnameCol, "First Name");
+      table.addColumn(lnameCol, "Last Name");
+      table.setRowCount(students.size(),true);
+      table.setRowData(0,students);
+      HorizontalPanel buttonRow = new HorizontalPanel();
+      buttonRow.add(addButton);
+      buttonRow.add(deleteButton);
+      mainPanel.add(buttonRow);
+      mainPanel.add(addButton);
+      mainPanel.add(table);
+   } // end showStudents()
+   private void setupAddStudent()
+   {
+   	mainPanel.clear();
+	   VerticalPanel addStudentPanel = new VerticalPanel();
+	   Label fnLabel = new Label("First Name");
+	   HorizontalPanel fnRow = new HorizontalPanel();
+	   fnRow.add(fnLabel);
+	   fnRow.add(fnBox);
+	   addStudentPanel.add(fnRow);
+	   Label lnLabel = new Label("Last Name");
+	   HorizontalPanel lnRow = new HorizontalPanel();
+	   lnRow.add(lnLabel);
+	   lnRow.add(lnBox);
+	   addStudentPanel.add(lnRow);
+	   Label majLabel = new Label("Major");
+	   HorizontalPanel majRow = new HorizontalPanel();
+	   majRow.add(majLabel);
+	   majRow.add(majBox);
+	   addStudentPanel.add(majRow);
+	   addStudentPanel.add(addStudentButton);
+	   mainPanel.add(addStudentPanel);
+   }
+   private JsArray<Student> getData(String json)
+   {
+      return JsonUtils.safeEval(json);
+   }
 }

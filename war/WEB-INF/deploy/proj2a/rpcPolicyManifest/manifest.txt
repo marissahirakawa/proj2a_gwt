@@ -1,3 +1,2 @@
 # Module proj2a
 # RPC service class, partial path of RPC policy file
-proj2a.client.GreetingService, 4024364D7B95E51A99A110DE59F88D86.gwt.rpc
