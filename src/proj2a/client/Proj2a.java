@@ -31,6 +31,7 @@ public class Proj2a implements EntryPoint, ClickHandler
    JsArray<Student> jsonData;
    Button addButton = new Button("Add");
    Button deleteButton = new Button("Delete");
+   Button editButton = new Button("Edit");
    MyStudent selectedStudent = null;
    Button addStudentButton = new Button("Add Student");
    TextBox fnBox = new TextBox();
@@ -58,6 +59,7 @@ public class Proj2a implements EntryPoint, ClickHandler
 	 getRequest(url,"getStudents");
 	 addButton.addClickHandler(this);
 	 deleteButton.addClickHandler(this);
+	 editButton.addClickHandler(this);
 	 addStudentButton.addClickHandler(this);
 	 RootPanel.get().add(mainPanel);
 	 //setupAddStudent();
@@ -80,12 +82,15 @@ public class Proj2a implements EntryPoint, ClickHandler
 	 }
 	 else if (source == addButton) {
 		 setupAddStudent();
-		 }
+	 }
 	 else if (source == deleteButton) {
 		 String url = baseURL + "/students/deleteStudent";
 		 String postData = URL.encode("student_id") + "=" + 
 				 URL.encode("" + selectedStudent.id);
 		 postRequest(url,postData,"deleteStudent");
+	 }
+	 else if (source == editButton) {
+		 
 	 }
    }
    public void getRequest(String url, final String getType) {
@@ -131,7 +136,8 @@ public class Proj2a implements EntryPoint, ClickHandler
 				   public void onResponseReceived(final Request request,
 						   final Response response)
 				   {
-					   if (postType.equals("postStudent") || postType.equals("deleteStudent")) {
+					   if (postType.equals("postStudent") || postType.equals("deleteStudent")
+					   	    || postType.equals("editStudent")){
 					   	mainPanel.clear();
 						   String url = baseURL + "/students/index.json";
 						   getRequest(url,"getStudents");
@@ -194,8 +200,8 @@ public class Proj2a implements EntryPoint, ClickHandler
       HorizontalPanel buttonRow = new HorizontalPanel();
       buttonRow.add(addButton);
       buttonRow.add(deleteButton);
+      buttonRow.add(editButton);
       mainPanel.add(buttonRow);
-      mainPanel.add(addButton);
       mainPanel.add(table);
    } // end showStudents()
    private void setupAddStudent()
